@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>情緒培養皿｜微光溫室 1.0</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: #f7f4eb; 
+            background-image: linear-gradient(rgba(139, 92, 26, 0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 92, 26, 0.015) 1px, transparent 1px);
+            background-size: 24px 24px;
+            color: #475569;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            line-height: 1.6;
+            padding: 24px 16px;
+            position: relative;
+            transition: background-color 1.2s cubic-bezier(0.25, 1, 0.5, 1), color 0.8s;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body.storm-mode { background-color: #111827 !important; color: #cbd5e1; }
+
+        /* 修正：預設讓它寬高為 0 且隱藏，避免變成隱形牆阻擋手機點擊 */
+        #rainCanvasContainer {
+            position: fixed; top: 0; left: 0; width: 0; height: 0;
+            pointer-events: none; z-index: 1; opacity: 0;
+            overflow: hidden;
+            transition: opacity 0.8s ease;
+        }
+        /* 當暴風雨模式啟動時，才展開畫布接收雨滴動畫 */
+        body.storm-mode #rainCanvasContainer {
+            width: 100vw; height: 100vh;
+        }
+
+        .drop {
+            position: absolute; width: 2.2px; height: 45px;      
+            background: linear-gradient(transparent, rgba(147, 197, 253, 0.35)); 
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-50px); }
+            100% { transform: translateY(105vh); }
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 10; }
+
+        .terminal-header {
+            background-color: #2c2925; color: #faf9f6; border-left: 5px solid #a16207;
+            border-radius: 6px; padding: 18px; margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(139, 92, 26, 0.05); transition: all 0.8s;
+        }
+        body.storm-mode .terminal-header { background-color: #1f2937; border-left-color: #3b82f6; }
+
+        .main-layout { 
+            display: grid; 
+            grid-template-columns: 300px 1fr 320px; 
+            gap: 20px; 
+        }
+
+        .card {
+            background: #fdfcf7; border: 1px solid #ebdcc5; box-shadow: 0 4px 16px rgba(180, 83, 9, 0.03);
+            border-radius: 12px; padding: 20px; height: fit-content; transition: all 0.8s;
+        }
+        body.storm-mode .card { background: #1f2937; border-color: #374151; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+
+        @media (max-width: 1024px) { 
+            body { padding: 16px 12px; }
+            .main-layout { 
+                display: flex;
+                flex-direction: column; 
+                gap: 16px;
+            }
+            .area-observe { order: 1; }
+            .area-main { order: 2; }
+            .area-archive { order: 3; }
+        }
+
+        .form-label { font-weight: bold; font-size: 9.5pt; display: block; margin-top: 15px; margin-bottom: 6px; color: #713f12; transition: color 0.8s; }
+        body.storm-mode .form-label { color: #93c5fd; }
+
+        .form-control {
+            width: 100%; padding: 12px; border: 1px solid #ebdcc5; border-radius: 8px;
+            background: #fffdf9; font-size: 10.5pt; font-family: inherit; transition: all 0.3s; color: #451a03;
+            -webkit-appearance: none;
+        }
+        .form-control:focus { outline: none; border-color: #b45309; background: #ffffff; box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.1); }
+        body.storm-mode .form-control { background: #374151; border-color: #4b5563; color: #f9fafb; }
+        body.storm-mode .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        
+        .btn-submit {
+            background: #854d0e; color: white; border: none; padding: 14px; width: 100%;
+            border-radius: 8px; font-weight: bold; font-size: 11pt; cursor: pointer; margin-top: 18px;
+            transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative; z-index: 20; /* 確保按鈕層級高於其他干擾元素 */
+        }
+        .btn-submit:active { transform: scale(0.98); }
+
+        .petri-container {
+            height: 220px; background: #1a1714; border-radius: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.7);
+        }
+        .petri-dish {
+            width: 150px; height: 150px; border: 2px solid rgba(254, 243, 199, 0.05);
+            border-radius: 50%; display: flex; align-items: flex-end; justify-content: center;
+            padding-bottom: 25px; position: relative; background: radial-gradient(circle at center, #24201c 0%, #1a1714 100%);
+        }
+        .sprout-core { position: relative; display: flex; flex-direction: column; align-items: center; }
+        
+        .seed { 
+            width: 8px; height: 6px; background-color: #854d0e; border-radius: 50%; 
+            position: absolute; bottom: -2px; transition: background 0.5s; z-index: 5;
+        }
+        .sprout-stem {
+            width: 3px; height: 0px; background: #10b981; border-radius: 2px; position: relative;
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+        .leaf {
+            width: 9px; height: 5px; background-color: #10b981; position: absolute;
+            opacity: 0; transform: scale(0); transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .leaf.left { left: -8px; top: 40%; border-radius: 50% 50% 0 50%; transform: rotate(-35deg) scale(0); }
+        .leaf.right { right: -8px; top: 20%; border-radius: 50% 50% 50% 0; transform: rotate(35deg) scale(0); }
+        .sprout-stem.grown .leaf.left { opacity: 1; transform: rotate(-35deg) scale(1); }
+        .sprout-stem.grown .leaf.right { opacity: 1; transform: rotate(35deg) scale(1); }
+
+        .log-box { margin-top: 16px; }
+        .log-item {
+            border-left: 4px solid #a16207; background-color: #fffdfa; padding: 12px; margin-top: 10px; border-radius: 0 6px 6px 0;
+            transition: background-color 0.8s, color 0.8s; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        body.storm-mode .log-item { background-color: #374151; color: #f3f4f6; }
+        .emotion-badge { display: inline-block; font-size: 8pt; padding: 2px 6px; border-radius: 4px; color: white; margin-left: 6px; font-weight: bold; }
+
+        .log-actions { display: flex; align-items: center; gap: 8px; }
+        .btn-delete-log {
+            background: transparent; border: 1px solid #fecaca; color: #dc2626;
+            padding: 3px 8px; border-radius: 999px; cursor: pointer;
+            font-size: 8pt; line-height: 1.4; transition: all 0.2s ease;
+        }
+        .btn-delete-log:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
+        body.storm-mode .btn-delete-log { border-color: #7f1d1d; color: #fca5a5; }
+        body.storm-mode .btn-delete-log:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
+
+        .archive-item {
+            border: 1px solid #ebdcc5; padding: 14px; margin-top: 10px; border-radius: 8px; background: #fffdf9; 
+            cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden;
+        }
+        .archive-item:hover {
+            transform: translateY(-2px); box-shadow: 0 6px 12px rgba(139, 92, 26, 0.08); border-color: #b45309;
+        }
+        .archive-item.active {
+            background-color: #fef3c7; border-color: #d97706; box-shadow: inset 0 0 8px rgba(217, 119, 6, 0.05);
+        }
+        body.storm-mode .archive-item { background-color: #374151; border-color: #4b5563; color: #e2e8f0; }
+        body.storm-mode .archive-item.active { background-color: #1e293b; border-color: #3b82f6; }
+
+        .btn-danger { background: none; border: 1px solid #f87171; color: #ef4444; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 8.5pt; }
+        .btn-danger:hover { background: #ef4444; color: white; border-color: #ef4444; }
+        
+        .side-quote-card {
+            margin-top: 16px; background: linear-gradient(135deg, #fdfcf7 0%, #fef3c7 100%); border-left: 4px solid #d97706;
+        }
+        body.storm-mode .side-quote-card { background: linear-gradient(135deg, #1f2937 0%, #111827 100%); border-left-color: #3b82f6; }
+
+        .back-to-current-btn {
+            background: #ebdcc5; border: 1px solid #b45309; color: #713f12; font-size: 8.5pt; padding: 5px 10px;
+            border-radius: 4px; cursor: pointer; display: none; transition: all 0.2s; font-weight: bold;
+        }
+        .back-to-current-btn:hover { background: #d97706; color: white; }
+        body.storm-mode .back-to-current-btn { background: #374151; border-color: #4b5563; color: #cbd5e1; }
+    </style>
+</head>
+<body>
+
+    <div id="rainCanvasContainer"></div>
+
+    <div class="container">
+        <div class="terminal-header" id="headerBar">
+            <h1 style="font-size: 14pt; letter-spacing: 1px;">[ 情緒培養皿｜微光溫室 v 1.0 ]</h1>
+            <p style="opacity: 0.7; font-size: 8.5pt; margin-top: 4px;">由本地瀏覽器加密隔離保護 // 靜靜傾聽每一縷思緒的低語</p>
+        </div>
+
+        <div class="main-layout">
+            
+            <!-- 左側：歲月留影室 -->
+            <div class="card area-archive">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ebdcc5; padding-bottom: 6px;">
+                    <h3 style="font-size: 10.5pt;">🕰️ 歲月留影室</h3>
+                    <button class="btn-danger" style="font-size: 7.5pt; padding: 2px 6px;" onclick="clearAllArchives()">清除留影</button>
+                </div>
+                <p style="font-size: 8.5pt; opacity: 0.7; margin-top: 6px; margin-bottom: 10px;">點擊過往標本，可在中央區重新檢視當時編織的所有絮語。</p>
+                <div id="archiveTarget"></div>
+            </div>
+
+            <!-- 中間：輸入與過往紀錄清單 -->
+            <div class="area-main">
+                <div class="card" style="width: 100%;">
+                    <h3 style="font-size: 10.5pt; border-bottom: 1px solid #ebdcc5; padding-bottom: 8px;">① 傾注此時此刻的碎片</h3>
+                    
+                    <label class="form-label">選擇情感波動</label>
+                    <select class="form-control" id="emotionType" onchange="updateThemeColor()">
+                        <optgroup label="🔴 負面轉化（釋放暴風雨）">
+                            <option value="anger">憤怒 (Anger) — 烈火與滾燙菸灰</option>
+                            <option value="anxiety">焦慮 (Anxiety) — 潮濕的冷雨與金屬</option>
+                            <option value="lonely">孤獨 (Loneliness) — 深夜裡散落的舊紙張</option>
+                            <option value="grief">悲傷 (Grief) — 沉入海底的冰冷枯木</option>
+                            <option value="irritation">煩躁 (Irritation) — 頻率混亂的尖銳雜訊</option>
+                            <option value="overload">超載 (Overload) — 核心溫度過高的警告紅光</option>
+                            <option value="envy">羨慕 (Envy) — 隔著玻璃折射的酸澀綠光</option>
+                            <option value="jealousy">忌妒 (Jealousy) — 暗處悄然滋生的藤蔓</option>
+                            <option value="abandoned">被拋棄 (Abandoned) — 斷訊後留在原地的空白儀表</option>
+                            <option value="heartbroken">心碎 (Heartbroken) — 墜落並無法復原的玻璃器皿</option>
+                            <option value="resentment">不甘 (Resentment) — 燒得焦黑卻不願熄滅的炭火</option>
+                            <option value="grievance">委屈 (Grievance) — 壓在冰層下無法發聲的暗流</option>
+                        </optgroup>
+                        <optgroup label="🟢 正面提煉（擴散）">
+                            <option value="joy">喜悅 (Joy) — 晨曦微光與初開柚花</option>
+                            <option value="gratitude">感恩 (Gratitude) — 琥珀色的溫熱午後</option>
+                            <option value="resonance">共鳴 (Resonance) — 兩個相同頻率的微弱電波</option>
+                            <option value="reassurance">安心 (Reassurance) — 避風港裡溫暖的鎢絲燈泡</option>
+                            <option value="relaxation">放鬆 (Relaxation) — 浸泡在溫水裡的無重力狀態</option>
+                            <option value="drive">動力 (Drive) — 引擎深處剛剛點燃的火花</option>
+                            <option value="excitement">興奮 (Excitement) — 高頻率跳動的螢光粒子</option>
+                            <option value="vitality">生存動力 (Vitality) — 衝破漆黑泥土的強烈渴望</option>
+                            <option value="hope">希望 (Hope) — 森林裡剛冒出頭的翠綠氣息</option>
+                            <option value="contentment">滿足 (Contentment) — 午後曬乾的棉被帶著陽光的溫暖</option>
+                            <option value="relief">釋懷 (Relief) — 大雨後空氣中殘留的清新泥土味</option>
+                            <option value="determination">堅定 (Determination) — 狂風暴雨後依然穩定跳動的脈搏</option>
+                        </optgroup>
+                        <optgroup label="🔵 中性沉澱（觀察）">
+                            <option value="calm">平靜 (Calmness) — 拂過清晨湖面的微風</option>
+                            <option value="numb">麻木 (Numbness) — 靜止的白噪音與迷霧</option>
+                            <option value="vagueness">茫然 (Vagueness) — 起霧且看不清軌道的無人月台</option>
+                            <option value="undefined">未定義 (Undefined) — 尚未解碼的原始數據灰色區塊</option>
+                            <option value="contemplation">沉思 (Contemplation) — 緩慢流動的時間線</option>
+                            <option value="detachment">抽離 (Detachment) — 旁觀者視角審視現狀的清醒</option>
+                            <option value="fatigue">疲憊 (Fatigue) — 儀表板逐漸降溫的冷卻過程</option>
+                        </optgroup>
+                    </select>
+                    
+                    <label class="form-label">對溫室低語</label>
+                    <textarea class="form-control" id="emotionText" rows="4" placeholder="在這裡卸下防備，寫點什麼吧..."></textarea>
+                    
+                    <button class="btn-submit" id="submitBtn" onclick="injectEmotion()">將情緒投入培養皿 (Inject)</button>
+                </div>
+
+                <div class="card log-box" style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ebdcc5; padding-bottom: 8px;">
+                        <h3 style="font-size: 10.5pt;" id="logTitle">🍃 當前培育中絮語</h3>
+                        <button class="back-to-current-btn" id="backCurrentBtn" onclick="exitArchiveMode()">返回當前溫室</button>
+                        <button class="btn-danger" id="resetBtn" onclick="clearAllLogs()">重置溫室</button>
+                    </div>
+                    <div id="logTarget"></div>
+                </div>
+            </div>
+
+            <!-- 右側：生態槽與迴響 -->
+            <div class="area-observe">
+                <div class="card" style="width: 100%;">
+                    <h3 style="font-size: 10.5pt; border-bottom: 1px solid #ebdcc5; padding-bottom: 8px;">② 生態觀測窗</h3>
+                    
+                    <div class="petri-container">
+                        <div class="petri-dish">
+                            <div class="sprout-core">
+                                <div class="seed" id="seed"></div>
+                                <div class="sprout-stem" id="plant">
+                                    <div class="leaf left"></div>
+                                    <div class="leaf right"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(0,0,0,0.02); padding: 10px; border-radius: 6px; border: 1px dashed #ebdcc5; text-align: center; margin-top: 12px;" id="statusCard">
+                        <p style="font-size: 8.5pt; font-family: monospace;" id="statusText">正在感應溫室環境...</p>
+                        <p style="font-size: 8.5pt; font-weight: bold; color: #9a3412; margin-top: 2px;" id="cycleText">養分進度：0 / 30 劑</p>
+                    </div>
+                </div>
+
+                <div class="card side-quote-card">
+                    <h4 style="font-size: 9pt; color: #9a3412; margin-bottom: 4px;" id="quoteTitle">💌 來自溫室的微光迴響</h4>
+                    <p style="font-size: 9.5pt; font-style: italic; line-height: 1.5;" id="quoteTarget">
+                        「溫室的大門始終打開，歡迎你在此卸下所有的疲憊。」
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const emotionConfig = {
+            anger: { name: '憤怒', color: '#ef4444' },
+            anxiety: { name: '焦慮', color: '#3b82f6' },
+            lonely: { name: '孤獨', color: '#64748b' },
+            grief: { name: '悲傷', color: '#a855f7' },
+            irritation: { name: '煩躁', color: '#b91c1c' },
+            overload: { name: '超載', color: '#7f1d1d' },
+            envy: { name: '羨慕', color: '#047857' },
+            jealousy: { name: '忌妒', color: '#065f46' },
+            abandoned: { name: '被拋棄', color: '#451a03' },
+            heartbroken: { name: '心碎', color: '#991b1b' },
+            resentment: { name: '不甘', color: '#7c2d12' },
+            grievance: { name: '委屈', color: '#1d4ed8' },
+
+            joy: { name: '喜悅', color: '#eab308' },
+            gratitude: { name: '感恩', color: '#f97316' },
+            resonance: { name: '共鳴', color: '#06b6d4' },
+            reassurance: { name: '安心', color: '#10b981' },
+            relaxation: { name: '放鬆', color: '#34d399' },
+            drive: { name: '動力', color: '#f43f5e' },
+            excitement: { name: '興奮', color: '#ec4899' },
+            vitality: { name: '生存動力', color: '#f43f5e' },
+            hope: { name: '希望', color: '#22c55e' },
+            contentment: { name: '滿足', color: '#f59e0b' },
+            relief: { name: '釋懷', color: '#0ea5e9' },
+            determination: { name: '堅定', color: '#dc2626' },
+
+            calm: { name: '平靜', color: '#14b8a6' },
+            numb: { name: '麻木', color: '#94a3b8' },
+            vagueness: { name: '茫然', color: '#78716c' },
+            undefined: { name: '未定義', color: '#475569' },
+            contemplation: { name: '沉思', color: '#6366f1' },
+            detachment: { name: '抽離', color: '#475569' },
+            fatigue: { name: '疲憊', color: '#78716c' }
+        };
+
+        const warmQuotes = [
+            "「今天的你已經做得很好了。來到這裏，就可以把外面的面具摘下來囉。」",
+            "「不管今天收集到了什麼情緒，它們都是這段生命裡不可或缺的落葉與養分。」",
+            "「允許自己有一些什麼都不想做的時刻。植物在黑暗的土裡時，也只是靜靜待著。」",
+            "「有些事情一時想不通也沒關係的，把結交給時間，我們今晚先好好睡一覺。」",
+            "「外界的聲音太吵雜時，就聽聽自己平穩的呼吸聲吧。你一直都很有力量。」",
+            "「無論是高亢的動力還是低沉的麻木，在這座溫室裡，它們都擁有同等的重量。」",
+            "「你不需要每一天都活得很有意義，有時候，僅僅是安全地度過一天，就很偉大了。」",
+            "「別急著責怪自己，你也是第一次活成現在這個樣子。」",
+            "「不是每個人都能理解你的感受，但那不代表你的感受是錯的。」",
+            "「沒有人能毫無緣由地責怪你，包括你自己。」",
+            "「你沒有必要一直當懂事的人。」",
+            "「慢慢來也沒關係，你不是在跟誰比賽。」"
+        ];
+
+        const extremeNegativeEmotions = ['anger', 'irritation', 'overload', 'heartbroken', 'grief', 'anxiety', 'lonely', 'abandoned', 'resentment'];
+        
+        let selectedArchiveId = null; 
+
+        function getEmotionConfig(type) {
+            return emotionConfig[type] || { name: '未定義', color: '#64748b' };
+        }
+
+        function escapeHTML(str) {
+            return String(str || '').replace(/[&<>"']/g, function(match) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[match];
+            });
+        }
+
+        function createRainfield() {
+            const container = document.getElementById('rainCanvasContainer');
+            container.innerHTML = ''; 
+            for (let i = 0; i < 60; i++) { 
+                const drop = document.createElement('div');
+                drop.className = 'drop';
+                drop.style.left = Math.random() * 100 + 'vw';
+                drop.style.top = Math.random() * -20 + 'vh';
+                drop.style.animationDuration = (Math.random() * 0.2 + 0.35) + 's'; 
+                drop.style.animationDelay = Math.random() * 2 + 's';
+                container.appendChild(drop);
+            }
+        }
+
+        window.onload = function() {
+            createRainfield(); 
+            loadSavedLogs();
+            updateThemeColor();
+            refreshQuote();
+        };
+
+        function updateThemeColor() {
+            const type = document.getElementById('emotionType').value;
+            const targetColor = getEmotionConfig(type).color;
+            document.getElementById('headerBar').style.borderColor = targetColor;
+            document.getElementById('submitBtn').style.backgroundColor = targetColor;
+        }
+
+        function refreshQuote() {
+            const randomIdx = Math.floor(Math.random() * warmQuotes.length);
+            document.getElementById('quoteTarget').innerText = warmQuotes[randomIdx];
+        }
+
+        function loadSavedLogs() {
+            let archivedPlants = JSON.parse(localStorage.getItem('myArchivedPlants')) || [];
+            
+            const archiveTarget = document.getElementById('archiveTarget');
+            archiveTarget.innerHTML = '';
+            
+            if (archivedPlants.length === 0) {
+                archiveTarget.innerHTML = `<p style="color: #cbd5e1; text-align: center; padding: 20px; font-style: italic; font-size: 9pt;">尚無留影，心靈足跡會在此留下痕跡...</p>`;
+            } else {
+                archivedPlants.forEach(p => {
+                    const archDiv = document.createElement('div');
+                    archDiv.className = `archive-item ${selectedArchiveId === p.id ? 'active' : ''}`;
+                    archDiv.style.borderLeft = `4px solid ${p.color || '#a16207'}`;
+                    archDiv.onclick = () => viewArchiveDetail(p.id);
+
+                    const pName = p.name || "吸收養分頑強破土的沉睡標本";
+                    const pSci = p.sciName || "*Specimen antiquum* (歷史觀測標本)";
+                    const pDesc = p.desc || "此物種由早期溫室環境培育而成。雖然當時的溫室結構尚未鋪設「文字記憶回溯軌道」，但這 30 劑養分已完全融入其繁茂的枝葉中，成為支撐你走到當下的隱形基石。";
+
+                    archDiv.innerHTML = `
+                        <div style="font-weight: bold; font-size: 10.5pt; color: #1e293b; margin-bottom: 2px;">${pName}</div>
+                        <div style="font-size: 8.5pt; font-family: monospace; font-style: italic; color: #64748b; margin-bottom: 4px;">${pSci}</div>
+                        <div style="font-size: 8.5pt; line-height: 1.4; color: #475569; margin-top:5px; background: rgba(0,0,0,0.01); padding:4px; border-radius:3px;">${pDesc}</div>
+                        <div style="font-size: 7.5pt; opacity: 0.6; text-align: right; margin-top: 6px;">📅 凝結日：${p.date || '未知'} (高 ${p.height || 0})</div>
+                    `;
+                    archiveTarget.appendChild(archDiv);
+                });
+            }
+
+            if (selectedArchiveId !== null) {
+                const currentPlant = archivedPlants.find(p => p.id === selectedArchiveId);
+                if (currentPlant) {
+                    document.getElementById('logTitle').innerText = `🕰️ 歷史檢視：${currentPlant.name || '舊版標本'}`;
+                    document.getElementById('backCurrentBtn').style.display = 'inline-block';
+                    document.getElementById('resetBtn').style.display = 'none';
+
+                    if (!currentPlant.savedLogs || currentPlant.savedLogs.length === 0) {
+                        const target = document.getElementById('logTarget');
+                        target.innerHTML = `
+                            <div style="color: #64748b; text-align: center; padding: 30px 15px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #fffdfa; margin-top: 15px;">
+                                <p style="font-weight: bold; font-size: 10.5pt; color: #b45309;">⚙️ 歷史資料觀測盲區</p>
+                                <p style="font-size: 9pt; margin-top: 8px; line-height: 1.6;">
+                                    這株植物是在溫室鋪設「回溯軌道」前凝結的。<br>
+                                    當時系統僅凝聚植物形態，尚未對字句進行打包隔離。<br>
+                                    <span style="color: #10b981; font-weight: bold;">雖然當時的 30 條低語日記無法逐字重現，但它們帶來的能量已轉化完畢。</span><br>
+                                    此功能將在您接下來培育的「新植物」中完全生效！
+                                </p>
+                            </div>
+                        `;
+                    } else {
+                        renderLogItems(currentPlant.savedLogs, { canDelete: false });
+                    }
+                    return; 
+                }
+            }
+
+            document.getElementById('logTitle').innerText = `🍃 當前培育中絮語`;
+            document.getElementById('backCurrentBtn').style.display = 'none';
+            document.getElementById('resetBtn').style.display = 'inline-block';
+
+            let logs = JSON.parse(localStorage.getItem('myEmotionLogs')) || [];
+            let currentHeight = parseInt(localStorage.getItem('plantHeight')) || 0;
+            let lastEmotion = localStorage.getItem('lastEmotion') || '';
+            
+            let nutrientCount = logs.length;
+            document.getElementById('cycleText').innerText = `養分進度：${nutrientCount} / 30 劑`;
+
+            const plant = document.getElementById('plant');
+            const seed = document.getElementById('seed');
+            plant.style.height = currentHeight + 'px';
+            
+            if (currentHeight > 0 && lastEmotion) {
+                const activeColor = getEmotionConfig(lastEmotion).color;
+                plant.style.backgroundColor = activeColor;
+                plant.style.boxShadow = `0 0 10px ${activeColor}`;
+                seed.style.backgroundColor = activeColor;
+                
+                if(currentHeight >= 15) plant.classList.add('grown');
+                else plant.classList.remove('grown');
+                
+                document.getElementById('statusText').innerText = `枝枒目前高度：${currentHeight} (${getEmotionConfig(lastEmotion).name}養分)`;
+            } else {
+                plant.style.backgroundColor = '#a16207';
+                plant.style.boxShadow = 'none';
+                seed.style.backgroundColor = '#a16207';
+                plant.classList.remove('grown');
+                document.getElementById('statusText').innerText = `溫室處於空寂狀態 (等待第一劑情緒養分破土)`;
+            }
+            
+            renderLogItems(logs);
+
+            if (nutrientCount >= 30) {
+                setTimeout(() => {
+                    triggerPlantArchiving(logs, currentHeight);
+                }, 100);
+            }
+        }
+
+        function renderLogItems(targetLogs, options = {}) {
+            const target = document.getElementById('logTarget');
+            const canDelete = options.canDelete !== false && selectedArchiveId === null;
+            target.innerHTML = ''; 
+
+            if (!targetLogs || targetLogs.length === 0) {
+                target.innerHTML = `<p style="color: #94a3b8; text-align: center; padding: 20px; font-style: italic; font-size:9.5pt;">目前培養皿空無一物，等待你的第一劑情緒養分注入...</p>`;
+            } else {
+                targetLogs.forEach((item, index) => {
+                    const logItem = document.createElement('div');
+                    logItem.className = 'log-item';
+                    const conf = getEmotionConfig(item.emotion);
+                    logItem.style.borderLeftColor = conf.color;
+
+                    const deleteButton = canDelete
+                        ? `<button class="btn-delete-log" onclick="deleteOneLog(${index})">刪除</button>`
+                        : '';
+
+                    logItem.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <span style="font-size: 8.5pt; color: #94a3b8; font-family: monospace;">⏱️ ${escapeHTML(item.time)}</span>
+                            <div class="log-actions">
+                                <span class="emotion-badge" style="background: ${conf.color};">${escapeHTML(item.emotionName || conf.name)}</span>
+                                ${deleteButton}
+                            </div>
+                        </div>
+                        <p style="font-style: italic; margin-top: 6px; font-size: 10pt; padding-left: 2px;">「${escapeHTML(item.text)}」</p>
+                    `;
+                    target.appendChild(logItem);
+                });
+            }
+        }
+
+        function recalculatePlantAfterDeletion(logs) {
+            if (!logs || logs.length === 0) {
+                localStorage.removeItem('plantHeight');
+                localStorage.removeItem('lastEmotion');
+                return;
+            }
+
+            const newHeight = Math.min(150, 15 + (logs.length - 1) * 4.5);
+            localStorage.setItem('plantHeight', newHeight);
+            localStorage.setItem('lastEmotion', logs[0].emotion || 'undefined');
+        }
+
+        function deleteOneLog(index) {
+            let logs = JSON.parse(localStorage.getItem('myEmotionLogs')) || [];
+
+            if (index < 0 || index >= logs.length) return;
+
+            const item = logs[index];
+            const preview = item && item.text ? item.text.slice(0, 28) : '這筆紀錄';
+            if (!confirm(`確定要刪除這一筆絮語嗎？\n「${preview}${item && item.text && item.text.length > 28 ? '...' : ''}」`)) {
+                return;
+            }
+
+            logs.splice(index, 1);
+            localStorage.setItem('myEmotionLogs', JSON.stringify(logs));
+            recalculatePlantAfterDeletion(logs);
+            loadSavedLogs();
+        }
+
+        function viewArchiveDetail(id) {
+            selectedArchiveId = (selectedArchiveId === id) ? null : id; 
+            loadSavedLogs();
+            if (window.innerWidth <= 1024) {
+                document.querySelector('.area-main').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function exitArchiveMode() {
+            selectedArchiveId = null;
+            loadSavedLogs();
+        }
+
+        function injectEmotion() {
+            if (selectedArchiveId !== null) {
+                selectedArchiveId = null;
+            }
+
+            const textInput = document.getElementById('emotionText');
+            const typeSelect = document.getElementById('emotionType');
+            
+            const text = textInput.value.trim();
+            const type = typeSelect.value;
+            const selectedLabel = typeSelect.options[typeSelect.selectedIndex].text || '';
+            const emotionName = selectedLabel.split('—')[0].trim() || getEmotionConfig(type).name;
+
+            if (!text) {
+                alert('請先寫下此時此刻的心情，再放入溫室。');
+                return;
+            }
+
+            const rainContainer = document.getElementById('rainCanvasContainer');
+            
+            if (extremeNegativeEmotions.includes(type)) {
+                document.body.classList.add('storm-mode');
+                rainContainer.style.opacity = "1";
+                
+                setTimeout(() => {
+                    rainContainer.style.opacity = "0";
+                    document.body.classList.remove('storm-mode');
+                }, 5000);
+            } else {
+                rainContainer.style.opacity = "0";
+                document.body.classList.remove('storm-mode');
+            }
+
+            let currentHeight = parseInt(localStorage.getItem('plantHeight')) || 0;
+            currentHeight = (currentHeight === 0) ? 15 : currentHeight + 4.5;
+            if (currentHeight > 150) currentHeight = 150; 
+            
+            localStorage.setItem('plantHeight', currentHeight);
+            localStorage.setItem('lastEmotion', type);
+
+            let logs = JSON.parse(localStorage.getItem('myEmotionLogs')) || [];
+            const newLog = {
+                time: new Date().toLocaleString('zh-TW', { hour12: false }),
+                emotion: type,
+                emotionName: emotionName,
+                text: text
+            };
+
+            logs.unshift(newLog);
+            localStorage.setItem('myEmotionLogs', JSON.stringify(logs));
+
+            textInput.value = '';
+            refreshQuote();
+            loadSavedLogs();
+
+            if (window.innerWidth <= 1024) {
+                document.querySelector('.area-observe').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function triggerPlantArchiving(logs, finalHeight) {
+            let emotionCounts = {};
+            logs.forEach(l => {
+                emotionCounts[l.emotionName] = (emotionCounts[l.emotionName] || 0) + 1;
+            });
+            
+            let mainEmotionName = Object.keys(emotionCounts).reduce((a, b) => emotionCounts[a] > emotionCounts[b] ? a : b);
+            let lastEmotionKey = localStorage.getItem('lastEmotion') || 'calm';
+            let mainColor = getEmotionConfig(lastEmotionKey).color;
+
+            let plantName = "";
+            let sciName = "";
+            let description = "";
+
+            if (mainEmotionName.includes("喜悅") || mainEmotionName.includes("興奮") || mainEmotionName.includes("生存動力") || mainEmotionName.includes("動力")) {
+                plantName = `熾光屬：燃心共生懸鉤子`;
+                sciName = `Rubus cor-ignis vivax`;
+                description = `誕生於高頻波動的溫熱土壤中，葉片邊緣帶有微小的鋸齒。這株植物在極短時間內汲取了大量前進的意志，根系具有驚人的穿透力，能將沉悶的環境轉化為向上伸展的破土微光。`;
+            } else if (mainEmotionName.includes("平靜") || mainEmotionName.includes("放鬆") || mainEmotionName.includes("安心") || mainEmotionName.includes("感恩")) {
+                plantName = `凝露屬：微芒拂光多肉`;
+                sciName = `Sedum aura-quietis`;
+                description = `極其罕見的靜謐亞種，生長於毫無雜訊的溫和氣流中。肥厚的肉質葉片能完美鎖住平穩的思緒呼吸，不畏乾旱與寂寞，散發著淡淡的鎢絲燈泡般的溫潤微光，能安撫周遭紊亂的磁場。`;
+            } else if (mainEmotionName.includes("焦慮") || mainEmotionName.includes("超載") || mainEmotionName.includes("煩躁")) {
+                plantName = `織霜屬：裂紋重載苔蘚`;
+                sciName = `Bryum anxietatis cracks`;
+                description = `在高壓金屬感與潮濕冷雨交織的縫隙中頑強破土。其表面呈現獨特的微小裂紋，看似脆弱，實則具備恐怖的環境耐受力。它默默吸收了超載的熱能，並將其壓縮、儲存於最深層的根脈之中。`;
+            } else if (mainEmotionName.includes("心碎") || mainEmotionName.includes("悲傷") || mainEmotionName.includes("孤獨") || mainEmotionName.includes("被拋棄") || mainEmotionName.includes("不甘") || mainEmotionName.includes("委屈")) {
+                plantName = `遺落屬：沉海沉香蕨`;
+                sciName = `Polypodium lacrima-profunda`;
+                description = `於深海冷木或斷訊的儀表暗處靜靜抽芽。葉片色澤深沉，帶有半透明的淚滴狀腺體。它是一株擅長在黑暗中解碼孤寂的蕨類，每一片葉子的低垂，都是為了妥善包裹那些無處安放的心碎碎片。`;
+            } else {
+                plantName = `未命名屬：迷霧原數據藤蔓`;
+                sciName = `Vitis nebula-raw`;
+                description = `生長於起霧且軌道不明的灰色區塊中。它不急於定義自己，只是靜靜地將所有模糊、麻木與未定義的時光，抽絲繭化作細長的氣根，在多維空間中尋找觸碰世界的另一種可能。`;
+            }
+
+            alert(`✨ 30 劑心靈養分已全數吸收完畢！\n這段時間的思緒在培養皿中編織結晶，成功培育出珍稀物種：\n\n🌿【${plantName}】\n🔬 ${sciName}\n\n這株植物已妥善移入「歲月留影室」永久典藏。`);
+
+            let archivedPlants = JSON.parse(localStorage.getItem('myArchivedPlants')) || [];
+            archivedPlants.unshift({
+                id: Date.now(), 
+                name: plantName,
+                sciName: sciName,
+                desc: description,
+                date: new Date().toLocaleDateString('zh-TW'),
+                height: Math.round(finalHeight),
+                color: mainColor,
+                savedLogs: logs 
+            });
+            localStorage.setItem('myArchivedPlants', JSON.stringify(archivedPlants));
+
+            localStorage.removeItem('myEmotionLogs');
+            localStorage.removeItem('plantHeight');
+            localStorage.removeItem('lastEmotion');
+            
+            loadSavedLogs();
+        }
+
+        function clearAllLogs() {
+            if (confirm('確定要清除目前的溫室環境嗎？這會重置當前培育中的養分和小枝枒，但左側「歲月留影室」的植物紀錄會完整保留。')) {
+                localStorage.removeItem('myEmotionLogs');
+                localStorage.removeItem('plantHeight');
+                localStorage.removeItem('lastEmotion');
+                loadSavedLogs();
+                updateThemeColor();
+            }
+        }
+
+        function clearAllArchives() {
+            if (confirm('⚠️ 注意：確定要徹底清除「歲月留影室」內的所有植物標本嗎？\n這將移除過去封存的所有歷史數據，此操作無法復原。')) {
+                localStorage.removeItem('myArchivedPlants');
+                selectedArchiveId = null; 
+                loadSavedLogs();
+            }
+        }
+    </script>
+</body>
+</html>
