@@ -1,6 +1,7 @@
 # Emotional Petri Dish
 > Observe. Record. Reflect.
-Emotional Petri Dish is a lightweight HTML application designed to help users observe, record, and reflect on their emotions.
+
+Emotional Petri Dish is a project designed to help users observe, record, and reflect on their emotions.
 The project encourages emotional awareness through simple daily observations. By recording thoughts and emotions over time, users can better recognize emotional patterns, understand their responses, and reflect on personal growth.
 
 ### Features
@@ -24,7 +25,7 @@ All records are stored locally in your browser, giving you complete control over
 
 ---
 
-**情緒培養皿（Emotional Petri Dish）** 是一款以 HTML 製作的輕量化情緒觀察工具，旨在幫助使用者觀察、記錄與反思自己的情緒。
+**情緒培養皿（Emotional Petri Dish）** 是一個情緒觀察計畫，旨在幫助使用者觀察、記錄與反思自己的情緒。
 透過每天簡單的情緒紀錄，使用者可以逐漸看見自己的情緒模式、理解情緒變化，並回顧自己的成長歷程。
 
 ### 功能特色
