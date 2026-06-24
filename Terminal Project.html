@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>終端計劃｜個人訂製版</title>
+    <style>
+        :root {
+            --bg-color: #0a0c10;       /* 曜石極黑 */
+            --card-bg: #111317;        /* 沉墨灰 */
+            --border-color: #21262d;    /* 終端細緻框線 */
+            --text-main: #cfd3dc;       /* 柔霧月白 */
+            --text-muted: #6b7280;     /* 暮雲灰 */
+            --accent-primary: #520b19;  /* 圖片中的暗紅按鈕色 */
+            --accent-hover: #731327;    /* 緋紅懸停 */
+            --accent-glow: #e11d48;     /* 終端高亮紅 */
+            
+            /* 心緒信號顏色 */
+            --color-negative: #fca5a5;  /* 驚蟄紅 */
+            --color-positive: #6ee7b7;  /* 復甦綠 */
+            --color-neutral: #93c5fd;   /* 沉寂藍 */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', monospace;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 15px;
+            background-image: radial-gradient(rgba(133, 18, 41, 0.04) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-bottom: 2px solid #3d141d;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        @media (min-width: 576px) {
+            header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        header::before {
+            content: "";
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 12px;
+            height: 2px;
+            background-color: var(--accent-glow);
+            animation: blink 1.2s infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .title-area {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .title-area h1 {
+            font-size: 1.6rem;
+            letter-spacing: 2px;
+            color: #fff;
+            margin-bottom: 6px;
+            text-shadow: 0 0 15px rgba(225, 29, 72, 0.3);
+        }
+
+        .title-area p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        .user-id {
+            align-self: flex-start;
+            font-family: monospace;
+            font-weight: bold;
+            color: var(--accent-glow);
+            background: rgba(133, 18, 41, 0.08);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #3d141d;
+            text-shadow: 0 0 5px rgba(225, 29, 72, 0.4);
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: min(100%, 280px);
+        }
+
+        .user-id label {
+            margin-bottom: 0;
+            color: var(--accent-glow);
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .user-id-editor {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .user-id input[type="text"] {
+            font-family: monospace;
+            font-weight: bold;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid #3d141d;
+            padding: 7px 8px;
+            font-size: 0.8rem;
+            min-width: 0;
+        }
+
+        .user-id button {
+            width: auto;
+            flex-shrink: 0;
+            padding: 7px 10px;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            border: 1px solid #3d141d;
+        }
+
+        .user-id-status {
+            min-height: 1em;
+            color: var(--text-muted);
+            font-size: 0.68rem;
+            letter-spacing: 1px;
+            text-shadow: none;
+        }
+        
+        @media (min-width: 576px) {
+            .user-id {
+                align-self: center;
+            }
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .full-width {
+                grid-column: 1 / -1;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 24px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.6);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .equal-height {
+            height: 100%;
+        }
+
+        /* 改為與圖片相同的特定精緻左側裝飾線 */
+        .card h2 {
+            font-size: 1.35rem;
+            margin-bottom: 24px;
+            color: #fff;
+            border-left: 4px solid #f43f5e; 
+            padding-left: 12px;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        button {
+            background-color: var(--accent-primary);
+            color: #fff;
+            border: none;
+            padding: 14px 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            letter-spacing: 1.5px;
+            text-align: center;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+            box-shadow: 0 0 15px rgba(225, 29, 72, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group.last-group {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 12px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+        }
+
+        select, textarea, input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            background-color: #000000; /* 圖片中輸入框為純黑背景 */
+            border: 1px solid #262930;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        select:focus, textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #f43f5e;
+            box-shadow: 0 0 8px rgba(244, 63, 94, 0.2);
+        }
+
+        /* 庫存書單顯示管理樣式 */
+        .current-books-box {
+            margin-top: 24px;
+            padding-top: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .current-books-box label {
+            width: 100%;
+            text-align: left;
+        }
+
+        .current-books-container {
+            width: 100%;
+            min-height: 80px;
+            max-height: 150px; 
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .current-book-item {
+            width: 100%;
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            border: 1px solid #1f2229;
+        }
+
+        .current-book-info {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-right: 10px;
+            display: flex; 
+            align-items: center;
+        }
+        .current-book-quad {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-left: 6px;
+            flex-shrink: 0;
+        }
+        .erase-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 0.8rem;
+            width: auto;
+            padding: 2px 6px;
+            letter-spacing: 1px;
+            text-align: right;
+        }
+        .erase-btn:hover {
+            color: #f87171;
+            text-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+        }
+
+        .emotion-group-title {
+            font-size: 0.85rem;
+            margin: 18px 0 10px 0;
+            padding-bottom: 5px;
+            letter-spacing: 1px;
+        }
+        .title-neg { color: var(--color-negative); border-bottom: 1px solid rgba(252,165,165,0.12); }
+        .title-pos { color: var(--color-positive); border-bottom: 1px solid rgba(110,231,183,0.12); }
+        .title-neu { color: var(--color-neutral); border-bottom: 1px solid rgba(147,197,253,0.12); }
+
+        .emotion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .emotion-item {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.02);
+            border-radius: 4px;
+            padding: 10px;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .emotion-item .emo-name {
+            font-weight: bold;
+            font-size: 0.85rem;
+            display: block;
+        }
+
+        .emotion-item .emo-desc {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 4px;
+        }
+
+        .emotion-item.selected[data-group="負面轉化"] { background: rgba(252,165,165,0.06); border-color: var(--color-negative); }
+        .emotion-item.selected[data-group="正面提煉"] { background: rgba(110,231,183,0.06); border-color: var(--color-positive); }
+        .emotion-item.selected[data-group="中性沉澱"] { background: rgba(147,197,253,0.06); border-color: var(--color-neutral); }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            max-height: 600px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .history-item {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid #3d141d;
+            border-radius: 4px;
+            padding: 16px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .history-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+
+        @media (min-width: 576px) {
+            .history-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .history-title {
+            font-weight: bold;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .history-quadrant {
+            font-size: 0.75rem;
+            background: rgba(133, 18, 41, 0.12);
+            padding: 3px 8px;
+            border-radius: 2px;
+            color: var(--color-negative);
+            align-self: flex-start;
+        }
+        
+        @media (min-width: 576px) {
+            .history-quadrant {
+                align-self: auto;
+            }
+        }
+
+        .history-emotions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 2px;
+        }
+        .tag-neg { background: rgba(252,165,165,0.1); color: var(--color-negative); }
+        .tag-pos { background: rgba(110,231,183,0.1); color: var(--color-positive); }
+        .tag-neu { background: rgba(147,197,253,0.1); color: var(--color-neutral); }
+
+        .history-text {
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+        }
+        .history-text span {
+            color: var(--text-muted);
+            display: block;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+        }
+
+        .history-item .action-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 8px;
+            border-top: 1px dashed rgba(255,255,255,0.05);
+            padding-top: 12px;
+        }
+
+        .history-item .action-btn {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            opacity: 0.8;
+            transition: all 0.2s;
+            width: auto; 
+            padding: 6px 12px; 
+            letter-spacing: 1px;
+            text-align: center;
+        }
+        .history-item .action-btn:hover { 
+            opacity: 1; 
+            border-color: #851229;
+        }
+        .history-item .copy-btn { color: var(--color-positive); border-color: rgba(110,231,183,0.15); }
+        .history-item .delete-btn { color: #ef4444; border-color: rgba(239,68,68,0.15); }
+
+
+
+        .history-item.clickable-history {
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+
+        .history-item.clickable-history:hover {
+            border-color: #851229;
+            background: rgba(133, 18, 41, 0.08);
+            box-shadow: 0 0 14px rgba(225, 29, 72, 0.12);
+        }
+
+        .history-header {
+            cursor: pointer;
+        }
+
+        .history-toggle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .history-detail {
+            display: none;
+        }
+
+        .history-item.expanded .history-detail {
+            display: block;
+        }
+
+        .history-item.expanded .history-toggle {
+            color: var(--accent-glow);
+        }
+
+        .bridge-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 15px;
+            width: 100%;
+        }
+        @media (min-width: 576px) {
+            .bridge-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .card-footer-tip {
+            font-size: 0.75rem; 
+            color: var(--text-muted); 
+            line-height: 1.4; 
+            text-align: center; 
+            margin-top: auto; 
+            border-top: 1px dashed rgba(255,255,255,0.05); 
+            padding-top: 15px;
+        }
+        
+        .maintenance-card {
+            border-color: #1e293b !important; 
+            background: #0f1115 !important;
+        }
+        .maintenance-tip {
+            font-size: 0.8rem; 
+            color: var(--text-muted); 
+            text-align: center;
+        }
+        .obs-primer-box {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="title-area">
+            <h1>情緒培養皿延伸計畫</h1>
+            <p>> [ 終端計劃：高危心緒噪點之動態覆寫協定 ]</p>
+        </div>
+        <div class="user-id">
+            <label for="userIdInput">USER ID</label>
+            <div class="user-id-editor">
+                <input type="text" id="userIdInput" maxlength="32" placeholder="OBSERVATION USER">
+                <button type="button" onclick="saveUserId()">SAVE</button>
+            </div>
+            <div class="user-id-status" id="userIdStatus">> LOCAL_PROFILE_READY</div>
+        </div>
+    </header>
+
+    <div class="main-grid">
+        <div class="card equal-height">
+            <h2>> 觀測引子設定 (MANUAL_INPUT)_</h2>
+            <div class="form-group last-group obs-primer-box">
+                <label>> 請輸入當下的「心緒引子」或「引導語」（例如牌卡文字、主持人指定情境）</label>
+                <textarea id="manualThemeInput" rows="5" placeholder="在此處鍵入或貼上本次探索的引子文字..."></textarea>
+            </div>
+            <p class="card-footer-tip">
+                * 註：此處輸入的引子，將會在提交覆寫任務時，隨同你的閱讀筆記一同打包歸檔。
+            </p>
+        </div>
+
+        <div class="card equal-height">
+            <h2>> 新置書冊代碼登錄_</h2>
+            <div class="form-group">
+                <label>> 登錄書冊卷名 (VOLUME_NAME)</label>
+                <input type="text" id="newBookTitle" placeholder="請輸入欲增置之書名...">
+            </div>
+            <div class="form-group">
+                <label>> 定其所屬象限 (QUAD_SETTING)</label>
+                <select id="newBookQuadrant"></select>
+            </div>
+            <div class="form-group">
+                <button onclick="addNewBook()">> 寫入庫存編碼 (REGISTER_BOOK)</button>
+            </div>
+            
+            <div class="current-books-box">
+                <label>> 自訂書籍庫存管理 (新增書籍除名)</label>
+                <div id="currentBooksList" class="current-books-container"></div>
+            </div>
+        </div>
+
+        <div class="card full-width">
+            <h2>> 遂行心緒覆寫任務_</h2>
+            <form id="recordForm" onsubmit="saveRecord(event)">
+                <div class="form-group">
+                    <label>> 擇選欲覆寫之書冊 (SELECT_VOLUME)</label>
+                    <select id="bookSelect" required>
+                        <option value="">-- 請擇選書冊 --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>> 勾連心緒信號 (可複選) [ SCAN_AURA ]</label>
+                    <div class="emotion-container" id="emotionSelector"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>> 緣何勾連此心緒 (記其因由)</label>
+                    <textarea id="reasonInput" rows="3" placeholder="略述此心緒與文字相觸之因由與催化機制..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>> 觀書心得與冥想紀要 (誌其觀感)</label>
+                    <textarea id="notesInput" rows="5" placeholder="自由格物，誌其共鳴、反思或內在之格式化軌跡..." required></textarea>
+                </div>
+
+                <button type="submit" style="background-color: #851229;">> 遂行覆寫．注入終端 (COMMIT_RECORD)</button>
+            </form>
+        </div>
+
+        <div class="card full-width">
+            <h2>> 歷載心緒沉澱與覆寫存檔_</h2>
+            <div class="history-list" id="historyList"></div>
+        </div>
+
+        <div class="card full-width maintenance-card">
+            <h2>> 終端管理與數據維護協定 (TERMINAL_MAINTENANCE)_</h2>
+            <p class="maintenance-tip">本機端數據完整度維護。可將資料打包轉移，或清空本機暫存：</p>
+            <div class="bridge-grid">
+                <button onclick="exportTerminalData()" style="background-color: #1e293b; border: 1px solid #334155;">> 打包並複製全數據密鑰 (EXPORT)</button>
+                <button onclick="importTerminalData()" style="background-color: #0f172a; border: 1px solid #1e293b;">> 匯入舊數據覆寫 (IMPORT)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 六大象限定義
+    const quadrants = {
+        "Q1": "☯️ 玄道與神祕學 (Mysticism)",
+        "Q2": "🌱 內在覺察與調適 (Mindset)",
+        "Q3": "⚡ 技能變現與創作 (Skills)",
+        "Q4": "☕ 文學虛構與漫遊 (Literature)",
+        "Q5": "💰 財富邏輯與生存 (Finance)",
+        "Q6": "🧬 存在狀態與體感紀實 (Physique)"
+    };
+
+    // 心緒信號清單
+    const emotionsData = [
+        { group: "負面轉化", name: "憤怒 (Anger)", desc: "烈火與滾燙菸灰" },
+        { group: "負面轉化", name: "焦慮 (Anxiety)", desc: "潮濕的冷雨與金屬" },
+        { group: "負面轉化", name: "孤獨 (Loneliness)", desc: "深夜裡散落的舊紙張" },
+        { group: "負面轉化", name: "悲傷 (Grief)", desc: "沉入海底的冰冷枯木" },
+        { group: "負面轉化", name: "煩躁 (Irritation)", desc: "頻率混亂的尖銳雜訊" },
+        { group: "負面轉化", name: "超載 (Overload)", desc: "核心溫度過高的警告紅光" },
+        { group: "負面轉化", name: "羨慕 (Envy)", desc: "隔著玻璃折射的酸澀綠光" },
+        { group: "負面轉化", name: "忌妒 (Jealousy)", desc: "暗處悄然滋生的藤蔓" },
+        { group: "負面轉化", name: "被拋棄 (Abandoned)", desc: "斷訊後留在原地的空白儀表" },
+        { group: "負面轉化", name: "心碎 (Heartbroken)", desc: "墜落並無法復原的玻璃器皿" },
+        { group: "負面轉化", name: "不甘 (Resentment)", desc: "燒得焦黑卻不願熄滅的炭火" },
+        { group: "負面轉化", name: "委屈 (Grievance)", desc: "壓在冰層下無法發聲的暗流" },
+        { group: "正面提煉", name: "喜悅 (Joy)", desc: "晨曦微光與初開柚花" },
+        { group: "正面提煉", name: "感恩 (Gratitude)", desc: "琥珀色的溫熱午後" },
+        { group: "正面提煉", name: "共鳴 (Resonance)", desc: "兩個相同頻率的微弱電波" },
+        { group: "正面提煉", name: "安心 (Reassurance)", desc: "避風港裡溫慢的鎢絲燈泡" },
+        { group: "正面提煉", name: "放鬆 (Relaxation)", desc: "浸泡在溫水裡的無重力狀態" },
+        { group: "正面提煉", name: "動力 (Drive)", desc: "引擎深處剛剛點燃的火花" },
+        { group: "正面提煉", name: "興奮 (Excitement)", desc: "高頻率跳動的螢光粒子" },
+        { group: "正面提煉", name: "希望 (Hope)", desc: "森林裡剛冒出頭的翠綠氣息" },
+        { group: "正面提煉", name: "滿足 (Contentment)", desc: "午後曬乾的棉被帶著陽光的溫暖" },
+        { group: "正面提煉", name: "釋懷 (Relief)", desc: "大雨後空氣中殘留的清新泥土味" },
+        { group: "正面提煉", name: "堅定 (Determination)", desc: "狂風暴雨後依然穩定跳動的脈搏" },
+        { group: "正面提煉", name: "生存動力 (Vitality)", desc: "衝破漆黑泥土的強烈渴望" },
+        { group: "中性沉澱", name: "平靜 (Calmness)", desc: "拂過清晨湖面的微風" },
+        { group: "中性沉澱", name: "麻木 (Numbness)", desc: "靜止的白噪音與迷霧" },
+        { group: "中性沉澱", name: "茫然 (Vagueness)", desc: "起霧且看不清軌道的無人月台" },
+        { group: "中性沉澱", name: "未定義 (Undefined)", desc: "尚未解碼的原始數據灰色區塊" },
+        { group: "中性沉澱", name: "沉思 (Contemplation)", desc: "緩慢流動的時間線" },
+        { group: "中性沉澱", name: "抽離 (Detachment)", desc: "旁觀者視角審視現狀的清醒" },
+        { group: "中性沉澱", name: "疲憊 (Fatigue)", desc: "儀表板逐漸降溫的冷卻過程" }
+    ];
+
+    let books = JSON.parse(localStorage.getItem('user_books')) || [];
+    let historyRecords = JSON.parse(localStorage.getItem('user_history')) || [];
+    let selectedEmotions = [];
+    let expandedRecordId = null;
+
+    window.onload = function() {
+        initUserId();
+        initFormElements();
+        renderBookSelect();
+        renderCurrentBooks();
+        renderEmotionSelector();
+        renderHistory();
+    };
+
+    function initUserId() {
+        const input = document.getElementById('userIdInput');
+        const savedUserId = localStorage.getItem('terminal_user_id') || 'OBSERVATION USER';
+        input.value = savedUserId;
+        input.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                saveUserId();
+            }
+        });
+    }
+
+    function saveUserId() {
+        const input = document.getElementById('userIdInput');
+        const status = document.getElementById('userIdStatus');
+        const userId = input.value.trim() || 'OBSERVATION USER';
+        input.value = userId;
+        localStorage.setItem('terminal_user_id', userId);
+        status.textContent = '> USER_ID_SAVED';
+        clearTimeout(window.userIdStatusTimer);
+        window.userIdStatusTimer = setTimeout(() => {
+            status.textContent = '> LOCAL_PROFILE_READY';
+        }, 1400);
+    }
+
+    function initFormElements() {
+        const newBookQuadSelect = document.getElementById('newBookQuadrant');
+        newBookQuadSelect.innerHTML = '';
+        for (let key in quadrants) {
+            let opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = quadrants[key];
+            newBookQuadSelect.appendChild(opt);
+        }
+    }
+
+    function addNewBook() {
+        const titleInput = document.getElementById('newBookTitle');
+        const quadSelect = document.getElementById('newBookQuadrant');
+        const title = titleInput.value.trim();
+        const quadrant = quadSelect.value;
+
+        if (!title) { alert('> [SYSTEM]: 書名未明，難以登錄。'); return; }
+        if (books.some(b => b.title === title)) { alert('> [SYSTEM]: 此書冊已在卷帙之中。'); return; }
+
+        const newId = books.length ? Math.max(...books.map(b => b.id)) + 1 : 1;
+        books.push({ id: newId, title: title, quadrant: quadrant, completed: false });
+        localStorage.setItem('user_books', JSON.stringify(books));
+        titleInput.value = '';
+        renderBookSelect();
+        renderCurrentBooks();
+    }
+
+    function renderBookSelect() {
+        const select = document.getElementById('bookSelect');
+        select.innerHTML = '<option value="">-- 請擇選書冊 --</option>';
+        for (let qKey in quadrants) {
+            const optGroup = document.createElement('optgroup');
+            optGroup.label = quadrants[qKey];
+            const filtered = books.filter(b => b.quadrant === qKey && !b.completed);
+            filtered.forEach(book => {
+                let opt = document.createElement('option');
+                opt.value = book.id;
+                opt.textContent = `《${book.title}》`;
+                optGroup.appendChild(opt);
+            });
+            if (filtered.length > 0) select.appendChild(optGroup);
+        }
+    }
+
+    // 修正此處原程式碼的變數錯誤，完美對應圖片樣式
+    function renderCurrentBooks() {
+        const listContainer = document.getElementById('currentBooksList');
+        listContainer.innerHTML = '';
+        const activeBooks = books.filter(b => !b.completed);
+        
+        if (activeBooks.length === 0) {
+            listContainer.innerHTML = '<div style="color: #4b5563; font-size: 0.95rem; text-align: center; padding: 10px; letter-spacing: 1px;">[ EMPTY ] 暫無自訂增置之書冊</div>';
+            return;
+        }
+
+        activeBooks.forEach(book => {
+            const item = document.createElement('div');
+            item.className = 'current-book-item';
+            const quadShort = quadrants[book.quadrant].split(' ')[0] || '';
+
+            item.innerHTML = `
+                <div class="current-book-info" title="${escapeHTML(book.title)}">
+                    <span>《${escapeHTML(book.title)}》</span>
+                    <span class="current-book-quad">[${escapeHTML(quadShort)}]</span>
+                </div>
+                <button class="erase-btn" onclick="deleteBook(${book.id}, '${escapeJSString(book.title)}')">[ 擦除編碼 ]</button>
+            `;
+            listContainer.appendChild(item);
+        });
+    }
+
+    function deleteBook(bookId, bookTitle) {
+        if (!confirm(`> [WARNING]: 確定要從庫存中永久擦除《${bookTitle}》之編碼？`)) return;
+        books = books.filter(b => b.id !== bookId);
+        localStorage.setItem('user_books', JSON.stringify(books));
+        renderBookSelect();
+        renderCurrentBooks();
+    }
+
+    function renderEmotionSelector() {
+        const container = document.getElementById('emotionSelector');
+        container.innerHTML = '';
+        const groups = ["負面轉化", "正面提煉", "中性沉澱"];
+        const classMap = { "負面轉化": "title-neg", "正面提煉": "title-pos", "中性沉澱": "title-neu" };
+
+        groups.forEach(gName => {
+            const titleDiv = document.createElement('div');
+            titleDiv.className = `emotion-group-title ${classMap[gName]}`;
+            titleDiv.textContent = `> ${gName}`;
+            container.appendChild(titleDiv);
+
+            const grid = document.createElement('div');
+            grid.className = 'emotion-grid';
+
+            emotionsData.filter(e => e.group === gName).forEach(emo => {
+                const item = document.createElement('div');
+                item.className = 'emotion-item';
+                item.setAttribute('data-group', gName);
+                item.innerHTML = `<span class="emo-name">${emo.name}</span><span class="emo-desc">${emo.desc}</span>`;
+                
+                item.onclick = function() {
+                    if (selectedEmotions.some(se => se.name === emo.name)) {
+                        selectedEmotions = selectedEmotions.filter(se => se.name !== emo.name);
+                        item.classList.remove('selected');
+                    } else {
+                        selectedEmotions.push(emo);
+                        item.classList.add('selected');
+                    }
+                };
+                grid.appendChild(item);
+            });
+            container.appendChild(grid);
+        });
+    }
+
+
+
+    function escapeHTML(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function escapeJSString(value) {
+        return String(value ?? '')
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r');
+    }
+
+    function toggleHistoryItem(recId) {
+        const item = document.getElementById(`history-${recId}`);
+        if (!item) return;
+        item.classList.toggle('expanded');
+        const toggle = item.querySelector('.history-toggle');
+        if (toggle) {
+            toggle.textContent = item.classList.contains('expanded') ? '> [COLLAPSE] 點擊收合紀錄' : '> [OPEN_ARCHIVE] 點擊展開詳情';
+        }
+    }
+
+    function saveRecord(e) {
+        e.preventDefault();
+        const bookId = parseInt(document.getElementById('bookSelect').value);
+        const reason = document.getElementById('reasonInput').value.trim();
+        const notes = document.getElementById('notesInput').value.trim();
+        const manualTheme = document.getElementById('manualThemeInput').value.trim();
+
+        if (!bookId || selectedEmotions.length === 0) { alert('> [SYSTEM]: 數據不全，拒絕注入。'); return; }
+
+        const book = books.find(b => b.id === bookId);
+        if (!book) { alert('> [SYSTEM]: 找不到此書冊，請重新選擇。'); return; }
+        book.completed = true;
+
+        const newRecord = {
+            id: Date.now(),
+            bookTitle: book.title,
+            quadrantName: quadrants[book.quadrant],
+            emotions: [...selectedEmotions],
+            reason: reason,
+            notes: notes,
+            date: new Date().toLocaleString('zh-TW'),
+            linkedTheme: manualTheme || "未特別指定引子"
+        };
+
+        historyRecords.unshift(newRecord);
+        expandedRecordId = newRecord.id;
+        localStorage.setItem('user_books', JSON.stringify(books));
+        localStorage.setItem('user_history', JSON.stringify(historyRecords));
+
+        document.getElementById('recordForm').reset();
+        selectedEmotions = [];
+        
+        renderBookSelect();
+        renderCurrentBooks();
+        renderEmotionSelector();
+        renderHistory();
+        alert('> [COMMIT_SUCCESS]: 心緒數據已成功寫入下方歷史存檔。');
+    }
+
+    function renderHistory() {
+        const listContainer = document.getElementById('historyList');
+        listContainer.innerHTML = '';
+        if (historyRecords.length === 0) {
+            listContainer.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 30px;">> [ARCHIVE_EMPTY]: 靜待心緒注入...</div>';
+            return;
+        }
+        historyRecords.forEach((rec, index) => {
+            const item = document.createElement('div');
+            const shouldExpand = expandedRecordId === rec.id || (expandedRecordId === null && index === 0);
+            item.className = `history-item clickable-history${shouldExpand ? ' expanded' : ''}`;
+            item.id = `history-${rec.id}`;
+            item.onclick = () => toggleHistoryItem(rec.id);
+            let tagsHtml = (rec.emotions || []).map(emo => {
+                let tagClass = emo.group === '負面轉化' ? 'tag-neg' : (emo.group === '正面提煉' ? 'tag-pos' : 'tag-neu');
+                return `<span class="tag ${tagClass}">[${escapeHTML(emo.name)}]</span>`;
+            }).join('');
+
+            item.innerHTML = `
+                <div class="history-header">
+                    <span class="history-title">>> 存檔: 《${escapeHTML(rec.bookTitle)}》 (${escapeHTML(rec.quadrantName)})</span>
+                    <span class="history-quadrant">${escapeHTML(rec.date)}</span>
+                </div>
+                <div class="history-toggle">${shouldExpand ? '> [COLLAPSE] 點擊收合紀錄' : '> [OPEN_ARCHIVE] 點擊展開詳情'}</div>
+                <div class="history-detail">
+                    <div class="history-text" style="color: var(--color-negative); font-style: italic; font-size: 0.8rem; margin: 12px 0; border-bottom: 1px dashed rgba(225,29,72,0.1); padding-bottom: 6px;">
+                        >> 觀測引子: "${escapeHTML(rec.linkedTheme)}"
+                    </div>
+                    <div class="history-emotions">${tagsHtml}</div>
+                    <div class="history-text"><span>> [勾連因由]</span>${escapeHTML(rec.reason)}</div>
+                    <div class="history-text" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; border-left: 2px solid #851229; margin-bottom: 0;"><span>> [格物紀要]</span>${escapeHTML(rec.notes)}</div>
+                    <div class="action-container" onclick="event.stopPropagation();">
+                        <button class="action-btn copy-btn" onclick="copyRecordText(${rec.id})">> [一鍵複製]</button>
+                        <button class="action-btn delete-btn" onclick="deleteRecord(${rec.id}, '${escapeJSString(rec.bookTitle)}')">> [歸檔刪除]</button>
+                    </div>
+                </div>
+            `;
+            listContainer.appendChild(item);
+        });
+        expandedRecordId = null;
+    }
+
+    function copyRecordText(recId) {
+        const rec = historyRecords.find(r => r.id === recId);
+        if (!rec) return;
+
+        const emoStr = rec.emotions.map(e => `[${e.name}]`).join(', ');
+        const textToCopy = `【心緒培養皿 紀錄回報】\n時間：${rec.date}\n書籍：《${rec.bookTitle}》\n所屬象限：${rec.quadrantName}\n當下引子：${rec.linkedTheme}\n勾連信號：${emoStr}\n\n> 勾連因由：\n${rec.reason}\n\n> 格物紀要：\n${rec.notes}`;
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert(`> [SUCCESS]: 《${rec.bookTitle}》的紀錄已成功複製至剪貼簿！`);
+        }).catch(() => {
+            alert('> [ERROR]: 瀏覽器不支援自動複製，請手動選取文字。');
+        });
+    }
+
+    function deleteRecord(recId, bookTitle) {
+        if (!confirm(`> [WARNING]: 確定刪除《${bookTitle}》之存檔？`)) return;
+        historyRecords = historyRecords.filter(r => r.id !== recId);
+        const book = books.find(b => b.title === bookTitle);
+        if (book) book.completed = false;
+        localStorage.setItem('user_books', JSON.stringify(books));
+        localStorage.setItem('user_history', JSON.stringify(historyRecords));
+        renderBookSelect();
+        renderCurrentBooks();
+        renderHistory();
+    }
+
+    function exportTerminalData() {
+        const bundle = {
+            books: JSON.parse(localStorage.getItem('user_books') || '[]'),
+            history: JSON.parse(localStorage.getItem('user_history') || '[]'),
+            userId: localStorage.getItem('terminal_user_id') || 'OBSERVATION USER'
+        };
+        const encryptedStr = btoa(encodeURIComponent(JSON.stringify(bundle)));
+        
+        navigator.clipboard.writeText(encryptedStr).then(() => {
+            alert('> [BRIDGE_SUCCESS]: 備份密鑰已複製！請妥善保存，勿分享給他人。');
+        }).catch(() => {
+            prompt('> [BRIDGE_FALLBACK]: 請手動複製下方備份密鑰（請勿分享給他人）：', encryptedStr);
+        });
+    }
+
+    function importTerminalData() {
+        const code = prompt('> [INPUT_REQUIRED]: 請貼入終端數據密鑰：');
+        if (!code) return;
+        try {
+            const decoded = JSON.parse(decodeURIComponent(atob(code)));
+            if (decoded.books) {
+                localStorage.setItem('user_books', JSON.stringify(decoded.books));
+                localStorage.setItem('user_history', JSON.stringify(decoded.history || []));
+                if (decoded.userId) localStorage.setItem('terminal_user_id', decoded.userId);
+                alert('> [IMPORT_SUCCESS]: 同步完成！網頁即將刷新。');
+                location.reload();
+            } else {
+                alert('> [SYNC_ERROR]: 格式錯誤。');
+            }
+        } catch(e) {
+            alert('> [SYNC_ERROR]: 解析失敗。');
+        }
+    }
+</script>
+</body>
+</html>
